@@ -1,0 +1,14 @@
+body { font-family: sans-serif; }
+.navigation, #search-form, #jump-to-date { display: none; }
+.month-grid { page-break-after: always; }
+.day { border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+.day-number { font-weight: bold; }
+.feasts { margin-top: 5px; }
+.feasts ul { list-style-type: none; padding-left: 0; }
+.feasts li { display: flex; align-items: center; }
+.feasts li.fasting:before { content: '🌱'; margin-right: 5px; }
+.orthodox-cross { color: purple; margin-right: 5px; font-size: 1.2em; vertical-align: middle; }
+.feasts li.non-working-day:before { content: '🔴'; margin-right: 5px; color: red; font-size: 1em; vertical-align: middle; }
+.national-event { color: red; }
+.orthodox-event { color: purple; }
+.fasting-event { color: green; }

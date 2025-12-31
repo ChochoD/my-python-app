@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Православен календар</title>
+    <link rel="stylesheet" href="print.css" media="print">
+    <style>
+        body { font-family: sans-serif; }
+        .navigation { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1em; }
+        #current-month-year { font-size: 1.5em; font-weight: bold; }
+        .month-container { display: none; }
+        .month-container.active { display: block; }
+        .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 2em; }
+        .day, .day-name { border: 1px solid #ccc; padding: 10px; min-height: 100px; }
+        .day-name { font-weight: bold; text-align: center; min-height: unset; }
+        .day-name.saturday { color: blue; }
+        .day-name.sunday { color: red; }
+        .day-number { font-weight: bold; }
+        .saturday { background-color: #e6f7ff; }
+        .saturday .day-number { color: blue; }
+        .sunday { background-color: #fff0f0; }
+        .sunday .day-number { color: red; }
+        .feasts { margin-top: 5px; }
+        .feasts ul { list-style-type: none; padding-left: 0; }
+        .feasts li { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .feasts li:hover { background-color: #f0f0f0; }
+        .feasts li.fasting:before { content: '🌱'; margin-right: 5px; }
+        .orthodox-cross { color: purple; margin-right: 5px; font-size: 1.2em; vertical-align: middle; }
+        .feasts li.non-working-day:before { content: '🔴'; margin-right: 5px; color: red; font-size: 1em; vertical-align: middle; }
+        .national-event { color: red; }
+        .orthodox-event { color: purple; }
+        .fasting-event { color: green; }
+        .current-day { background-color: #ffffcc; border: 2px solid #ffcc00; }
+        .selected-event { background-color: #e0e0e0; }
+        #search-results, #date-range-results { margin-top: 1em; }
+        #event-details { margin-top: 1em; padding: 1em; border: 1px solid #ccc; text-align: center; }
+        #event-details.orthodox-event { border-color: purple; }
+        #event-details.national-event { border-color: red; }
+        #event-details.fasting-event { border-color: green; }
+    </style>
+</head>
+<body>
+    <h1>Православен календар</h1>
+    <div class="navigation no-print">
+        <button id="prev-month">&lt; Предишен</button>
+        <h2 id="current-month-year"></h2>
+        <button id="next-month">Следващ &gt;</button>
+    </div>
+    <div class="navigation no-print">
+        <form id="jump-to-date">
+            <select id="month-select"></select>
+            <input type="number" id="year-input" placeholder="Година" />
+            <button type="submit">Go</button>
+        </form>
+    </div>
+    <div class="navigation no-print">
+        <form id="search-form">
+            <input type="text" id="search-input" placeholder="Търсене на празник" />
+            <button type="submit">Търсене</button>
+            <button type="button" id="clear-search">Изчисти</button>
+        </form>
+    </div>
+    <div class="navigation no-print">
+        <form id="date-range-form">
+            <input type="date" id="start-date">
+            <input type="date" id="end-date">
+            <button type="submit">Покажи</button>
+        </form>
+    </div>
+    <div class="navigation no-print">
+        <form id="filter-form">
+            <label><input type="checkbox" name="filter" value="orthodox" checked> Православни</label>
+            <label><input type="checkbox" name="filter" value="national" checked> Национални</label>
+            <label><input type="checkbox" name="filter" value="fasting" checked> Постни</label>
+        </form>
+    </div>
+    <div class="navigation no-print">
+        <button id="print-button">Печат</button>
+    </div>
+    <div id="calendar"></div>
+    <div id="search-results"></div>
+    <div id="date-range-results"></div>
+    <div id="event-details" class="no-print"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            fetch('/calendar-data')
+                .then(response => response.json())
+                .then(data => {
+                    const calendarDiv = document.getElementById('calendar');
+                    const searchResultsDiv = document.getElementById('search-results');
+                    const dateRangeResultsDiv = document.getElementById('date-range-results');
+                    const eventDetailsDiv = document.getElementById('event-details');
+                    const monthMap = { "януари": 0, "февруари": 1, "март": 2, "април": 3, "май": 4, "юни": 5, "юли": 6, "август": 7, "септември": 8, "октомври": 9, "ноември": 10, "декември": 11 };
+                    const monthSelect = document.getElementById('month-select');
+                    const yearInput = document.getElementById('year-input');
+                    const filterCheckboxes = document.querySelectorAll('#filter-form input[name="filter"]');
+                    let selectedEventElement = null;
+
+                    for (const monthName in monthMap) {
+                        const option = document.createElement('option');
+                        option.value = monthMap[monthName];
+                        option.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                        monthSelect.appendChild(option);
+                    }
+                    
+                    const today = new Date();
+                    const currentYear = today.getFullYear();
+                    const currentMonth = today.getMonth();
+                    const currentDay = today.getDate();
+
+                    let currentMonthIndex = data.findIndex(monthData => {
+                        const [monthName, year] = monthData.month.toLowerCase().split(' ');
+                        return parseInt(year) === currentYear && monthMap[monthName] === currentMonth;
+                    });
+
+                    if (currentMonthIndex === -1) {
+                        currentMonthIndex = 0; 
+                    }
+
+                    function getSelectedFilters() {
+                        const selectedFilters = [];
+                        filterCheckboxes.forEach(checkbox => {
+                            if (checkbox.checked) {
+                                selectedFilters.push(checkbox.value);
+                            }
+                        });
+                        return selectedFilters;
+                    }
+
+                    function renderCalendar(print = false) {
+                        calendarDiv.innerHTML = ''; 
+                        searchResultsDiv.innerHTML = '';
+                        dateRangeResultsDiv.innerHTML = '';
+                        eventDetailsDiv.innerHTML = '';
+                        calendarDiv.style.display = 'block';
+                        
+                        const filters = getSelectedFilters();
+
+                        if(print) {
+                            data.forEach(monthData => {
+                                calendarDiv.appendChild(createMonthGrid(monthData, filters));
+                            });
+                        } else {
+                            const monthData = data[currentMonthIndex];
+                            document.getElementById('current-month-year').textContent = monthData.month;
+                            calendarDiv.appendChild(createMonthGrid(monthData, filters));
+                        }
+                        
+                        document.getElementById('prev-month').disabled = currentMonthIndex === 0;
+                        document.getElementById('next-month').disabled = currentMonthIndex === data.length - 1;
+                        focusOnCurrentDay();
+                    }
+
+                    function createMonthGrid(monthData, filters) {
+                        const monthContainer = document.createElement('div');
+                        monthContainer.classList.add('month-container', 'active');
+                        
+                        const monthTitle = document.createElement('h2');
+                        monthTitle.textContent = monthData.month;
+                        monthContainer.appendChild(monthTitle);
+
+                        const monthGrid = document.createElement('div');
+                        monthGrid.classList.add('month-grid');
+
+                        const daysOfWeek = ['По', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'];
+                        daysOfWeek.forEach((day, index) => {
+                            const dayNameDiv = document.createElement('div');
+                            dayNameDiv.classList.add('day-name');
+                            if (index === 5) { // Saturday
+                                dayNameDiv.classList.add('saturday');
+                            } else if (index === 6) { // Sunday
+                                dayNameDiv.classList.add('sunday');
+                            }
+                            dayNameDiv.textContent = day;
+                            monthGrid.appendChild(dayNameDiv);
+                        });
+
+                        const [monthName, year] = monthData.month.toLowerCase().split(' ');
+                        const monthIndex = monthMap[monthName];
+                        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+                        let firstDayOfMonth = new Date(year, monthIndex, 1).getDay();
+                        if (firstDayOfMonth === 0) firstDayOfMonth = 7;
+
+                        for (let i = 1; i < firstDayOfMonth; i++) {
+                            const blankDay = document.createElement('div');
+                            monthGrid.appendChild(blankDay);
+                        }
+
+                        for (let day = 1; day <= daysInMonth; day++) {
+                            const dayDiv = document.createElement('div');
+                            dayDiv.classList.add('day');
+                            const date = new Date(year, monthIndex, day);
+                            const dayOfWeek = date.getDay();
+
+                            if (dayOfWeek === 6) { // Saturday
+                                dayDiv.classList.add('saturday');
+                            } else if (dayOfWeek === 0) { // Sunday
+                                dayDiv.classList.add('sunday');
+                            }
+
+                            if (parseInt(year) === currentYear && monthIndex === currentMonth && day === currentDay) {
+                                dayDiv.classList.add('current-day');
+                            }
+
+                            const dayNumber = document.createElement('div');
+                            dayNumber.classList.add('day-number');
+                            dayNumber.textContent = day;
+                            dayDiv.appendChild(dayNumber);
+
+                            if (monthData.days[day]) {
+                                const feasts = monthData.days[day].filter(feast => {
+                                    if (filters.length === 0) return true;
+                                    if (filters.includes('orthodox') && feast.type === 'orthodox') return true;
+                                    if (filters.includes('national') && (feast.type === 'secular' || feast.type === 'non-working')) return true;
+                                    if (filters.includes('fasting') && feast.name.toLowerCase().includes('пост')) return true;
+                                    return false;
+                                });
+
+                                if (feasts.length > 0) {
+                                    const feastsDiv = document.createElement('div');
+                                    feastsDiv.classList.add('feasts');
+                                    const feastsList = document.createElement('ul');
+                                    const sortedFeasts = feasts.sort((a, b) => {
+                                        if (a.type === 'non-working') return -1;
+                                        if (b.type === 'non-working') return 1;
+                                        return 0;
+                                    });
+
+                                    sortedFeasts.forEach(feast => {
+                                        const feastItem = document.createElement('li');
+                                        feastItem.addEventListener('click', (e) => showEventDetails(feast, `${day} ${monthData.month}`, e.currentTarget));
+
+                                        if (feast.name.toLowerCase().includes('пост')) {
+                                            feastItem.classList.add('fasting-event');
+                                        } else if (feast.type === 'orthodox') {
+                                            feastItem.classList.add('orthodox-event');
+                                        } else if (feast.type === 'secular' || feast.type === 'non-working') {
+                                            feastItem.classList.add('national-event');
+                                        }
+
+                                        if (feast.type === 'non-working') {
+                                            feastItem.classList.add('non-working-day');
+                                        } else if (feast.name.toLowerCase().includes('пост')) {
+                                            feastItem.classList.add('fasting');
+                                        } else if (feast.type === 'orthodox') {
+                                            const cross = document.createElement('span');
+                                            cross.classList.add('orthodox-cross');
+                                            cross.textContent = '✝';
+                                            feastItem.appendChild(cross);
+                                        }
+
+                                        const feastName = document.createElement('span');
+                                        feastName.textContent = feast.name;
+                                        feastItem.appendChild(feastName);
+                                        feastsList.appendChild(feastItem);
+                                    });
+                                    feastsDiv.appendChild(feastsList);
+                                    dayDiv.appendChild(feastsDiv);
+                                }
+                            }
+                            monthGrid.appendChild(dayDiv);
+                        }
+                        monthContainer.appendChild(monthGrid);
+                        return monthContainer;
+                    }
+
+                    function showEventDetails(feast, date, element) {
+                        if (selectedEventElement) {
+                            selectedEventElement.classList.remove('selected-event');
+                        }
+                        element.classList.add('selected-event');
+                        selectedEventElement = element;
+
+                        eventDetailsDiv.innerHTML = '';
+                        eventDetailsDiv.className = 'no-print'; // reset classes
+
+                        let icon = '';
+                        let className = '';
+
+                        if (feast.name.toLowerCase().includes('пост')) {
+                            icon = '🌱';
+                            className = 'fasting-event';
+                        } else if (feast.type === 'orthodox') {
+                            icon = '✝';
+                            className = 'orthodox-event';
+                        } else if (feast.type === 'secular' || feast.type === 'non-working') {
+                            icon = '🔴';
+                            className = 'national-event';
+                        }
+
+                        eventDetailsDiv.classList.add(className);
+                        
+                        const dateElement = document.createElement('h4');
+                        dateElement.textContent = date;
+                        eventDetailsDiv.appendChild(dateElement);
+
+                        const title = document.createElement('h3');
+                        title.textContent = `${icon} ${feast.name}`;
+                        eventDetailsDiv.appendChild(title);
+
+                        const description = document.createElement('p');
+                        description.textContent = feast.description || 'Няма допълнителна информация.';
+                        eventDetailsDiv.appendChild(description);
+                    }
+
+                    function showSearchResults(results) {
+                        calendarDiv.style.display = 'none';
+                        searchResultsDiv.innerHTML = '';
+                        dateRangeResultsDiv.innerHTML = '';
+                        eventDetailsDiv.innerHTML = '';
+
+                        if (results.length > 0) {
+                            const resultList = document.createElement('ul');
+                            results.forEach(result => {
+                                const resultItem = document.createElement('li');
+                                const link = document.createElement('a');
+                                link.href = '#';
+                                link.textContent = `${result.day} ${result.month} - ${result.feast.name}`;
+                                link.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    const targetIndex = data.findIndex(monthData => monthData.month === result.month);
+                                    if (targetIndex !== -1) {
+                                        currentMonthIndex = targetIndex;
+                                        renderCalendar();
+                                        showEventDetails(result.feast, `${result.day} ${result.month}`, e.currentTarget);
+                                    }
+                                });
+                                resultItem.appendChild(link);
+                                resultList.appendChild(resultItem);
+                            });
+                            searchResultsDiv.appendChild(resultList);
+                        } else {
+                            searchResultsDiv.textContent = 'Няма резултати за търсенето.';
+                        }
+                    }
+                    
+                    function showDateRangeResults(results) {
+                        calendarDiv.style.display = 'none';
+                        searchResultsDiv.innerHTML = '';
+                        dateRangeResultsDiv.innerHTML = '';
+                        eventDetailsDiv.innerHTML = '';
+
+                        if (results.length > 0) {
+                            const resultList = document.createElement('ul');
+                            results.forEach(result => {
+                                const resultItem = document.createElement('li');
+                                resultItem.textContent = `${result.day} ${result.month} - ${result.feast.name}`;
+                                resultList.appendChild(resultItem);
+                            });
+                            dateRangeResultsDiv.appendChild(resultList);
+                        } else {
+                            dateRangeResultsDiv.textContent = 'Няма събития в избрания период.';
+                        }
+                    }
+
+                    function focusOnCurrentDay() {
+                        const currentDayElement = document.querySelector('.current-day');
+                        if (currentDayElement) {
+                            currentDayElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }
+
+                    document.getElementById('prev-month').addEventListener('click', () => {
+                        if (currentMonthIndex > 0) {
+                            currentMonthIndex--;
+                            renderCalendar();
+                        }
+                    });
+
+                    document.getElementById('next-month').addEventListener('click', () => {
+                        if (currentMonthIndex < data.length - 1) {
+                            currentMonthIndex++;
+                            renderCalendar();
+                        }
+                    });
+
+                    document.getElementById('jump-to-date').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const selectedMonth = parseInt(monthSelect.value);
+                        const selectedYear = parseInt(yearInput.value);
+
+                        if (!isNaN(selectedYear)) {
+                            const newIndex = data.findIndex(monthData => {
+                                const [monthName, year] = monthData.month.toLowerCase().split(' ');
+                                return parseInt(year) === selectedYear && monthMap[monthName] === selectedMonth;
+                            });
+
+                            if (newIndex !== -1) {
+                                currentMonthIndex = newIndex;
+                                renderCalendar();
+                            } else {
+                                alert('Няма данни за избрания месец и година.');
+                            }
+                        }
+                    });
+
+                    document.getElementById('search-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const searchInput = document.getElementById('search-input');
+                        const query = searchInput.value.toLowerCase();
+                        const results = [];
+
+                        if (query) {
+                            data.forEach(monthData => {
+                                for (const day in monthData.days) {
+                                    monthData.days[day].forEach(feast => {
+                                        if (feast.name.toLowerCase().includes(query)) {
+                                            results.push({ month: monthData.month, day: day, feast: feast });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        showSearchResults(results);
+                    });
+
+                    document.getElementById('clear-search').addEventListener('click', () => {
+                        document.getElementById('search-input').value = '';
+                        renderCalendar();
+                    });
+
+                    document.getElementById('date-range-form').addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const startDate = new Date(document.getElementById('start-date').value);
+                        const endDate = new Date(document.getElementById('end-date').value);
+                        const results = [];
+
+                        if (startDate && endDate) {
+                            data.forEach(monthData => {
+                                const [monthName, yearStr] = monthData.month.toLowerCase().split(' ');
+                                const year = parseInt(yearStr);
+                                const month = monthMap[monthName];
+
+                                for (const day in monthData.days) {
+                                    const date = new Date(year, month, day);
+                                    if (date >= startDate && date <= endDate) {
+                                        monthData.days[day].forEach(feast => {
+                                            results.push({ month: monthData.month, day: day, feast: feast });
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                        showDateRangeResults(results);
+                    });
+
+                    filterCheckboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', () => {
+                            renderCalendar();
+                        });
+                    });
+
+                    document.getElementById('print-button').addEventListener('click', () => {
+                        renderCalendar(true);
+                        window.print();
+                        renderCalendar();
+                    });
+
+                    renderCalendar();
+                });
+        });
+    </script>
+</body>
+</html>
