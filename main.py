@@ -37,10 +37,17 @@ def generate_calendar_data(start_year, end_year):
         
         # Orthodox Fixed
         "theophany": "Празник, на който се чества кръщението на Исус Христос в река Йордан. Извършва се ритуал по хвърляне на кръста във вода.",
+        "three_holy_hierarchs": "Събор на Св. три светители - Василий Велики, Григорий Богослов и Йоан Златоуст.",
         "annunciation": "Един от 12-те големи християнски празници, на който Архангел Гавриил съобщава на Дева Мария благата вест, че тя ще роди Спасителя.",
+        "st_george_orthodox": "Ден на Св. вмчк. Георги Победоносец, един от най-почитаните светци в православието.",
+        "sts_cyril_methodius_orthodox": "Ден на светите братя Кирил и Методий, създатели на славянската азбука.",
         "transfiguration": "Един от 12-те големи християнски празници, на който се чества явяването на Исус Христос в божествена светлина пред трима от учениците си.",
         "dormition": "Един от 12-те големи християнски празници, посветен на смъртта (успението) на Божията майка.",
+        "nativity_theotokos": "Рождество на Пресвета Богородица. Един от 12-те големи празници.",
         "cross_elevation": "Един от 12-те велики празници. Свързан е с намирането на кръста, на който е бил разпнат Исус Христос.",
+        "protection_theotokos": "Покров на Пресвета Богородица, празник на закрилата, която Божията майка дава на вярващите.",
+        "st_john_of_rila": "Ден на Св. Йоан Рилски Чудотворец, покровител на българския народ.",
+        "presentation_theotokos": "Въведение Богородично. Ден на християнското семейство и младеж.",
         "st_nicholas": "Един от най-почитаните светци в източното православие, покровител на моряците, рибарите и банкерите.",
         "christmas_eve": "На този ден православната църква отбелязва навечерието на Рождество Христово. Традиционно се приготвя постна вечеря с нечетен брой ястия.",
 
@@ -55,8 +62,8 @@ def generate_calendar_data(start_year, end_year):
         "new_year": "Официален почивен ден.",
         "liberation_day": "Национален празник на България.",
         "labor_day": "Международен ден на труда.",
-        "st_georges_day": "Ден на храбростта и Българската армия.",
-        "cyril_methodius_day": "Ден на славянската писменост и култура.",
+        "st_georges_day_secular": "Ден на храбростта и Българската армия.",
+        "cyril_methodius_day_secular": "Ден на българската просвета, култура и на славянската писменост.",
         "unification_day": "Ден на Съединението.",
         "independence_day": "Ден на Независимостта.",
         "non_working": "Официален почивен ден.",
@@ -71,6 +78,7 @@ def generate_calendar_data(start_year, end_year):
         (1, 7): ["Иван", "Ивана", "Иванка", "Йоан", "Йоана"],
         (1, 17): ["Антон", "Антония", "Дончо", "Донка"],
         (1, 18): ["Атанас", "Атанаска"],
+        (1, 30): ["Василий", "Григорий", "Йоан"],
         (2, 10): ["Харалампи", "Валентин", "Валентина"],
         (3, 1): ["Марта", "Мартин"],
         (3, 25): ["Благовест", "Благовеста"],
@@ -86,9 +94,12 @@ def generate_calendar_data(start_year, end_year):
         (8, 26): ["Адриан", "Адриана"],
         (8, 30): ["Александър", "Александра"],
         (9, 17): ["Вяра", "Надежда", "Любов", "София"],
+        (10, 1): ["Покров"],
         (10, 14): ["Петко", "Петка"],
+        (10, 19): ["Йоан", "Иван"],
         (10, 26): ["Димитър", "Димитрина"],
         (11, 8): ["Ангел", "Ангелина", "Михаил", "Михаела"],
+        (11, 21): ["Въведение"],
         (11, 25): ["Екатерина"],
         (11, 30): ["Андрей"],
         (12, 6): ["Никола", "Николай", "Николина"],
@@ -99,16 +110,27 @@ def generate_calendar_data(start_year, end_year):
     fixed_holidays = {
         (1, 1): [{"name": "Нова година", "type": "secular", "description": descriptions["new_year"]}],
         (1, 6): [{"name": "Богоявление (Йордановден)", "type": "orthodox", "description": descriptions["theophany"]}],
+        (1, 30): [{"name": "Св. Три Светители", "type": "orthodox", "description": descriptions["three_holy_hierarchs"]}],
         (3, 3): [{"name": "Освобождение на България", "type": "secular", "description": descriptions["liberation_day"]}],
         (3, 25): [{"name": "Благовещение", "type": "orthodox", "description": descriptions["annunciation"]}],
         (5, 1): [{"name": "Ден на труда", "type": "secular", "description": descriptions["labor_day"]}],
-        (5, 6): [{"name": "Гергьовден", "type": "secular", "description": descriptions["st_georges_day"]}],
-        (5, 24): [{"name": "Ден на славянската писменост", "type": "secular", "description": descriptions["cyril_methodius_day"]}],
+        (5, 6): [
+            {"name": "Гергьовден, Ден на храбростта", "type": "secular", "description": descriptions["st_georges_day_secular"]},
+            {"name": "Св. вмчк. Георги Победоносец", "type": "orthodox", "description": descriptions["st_george_orthodox"]}
+        ],
+        (5, 24): [
+            {"name": "Ден на славянската писменост", "type": "secular", "description": descriptions["cyril_methodius_day_secular"]},
+            {"name": "Св. св. Кирил и Методий", "type": "orthodox", "description": descriptions["sts_cyril_methodius_orthodox"]}
+        ],
         (8, 6): [{"name": "Преображение Господне", "type": "orthodox", "description": descriptions["transfiguration"]}],
         (8, 15): [{"name": "Успение Богородично", "type": "orthodox", "description": descriptions["dormition"]}],
         (9, 6): [{"name": "Ден на Съединението", "type": "secular", "description": descriptions["unification_day"]}],
+        (9, 8): [{"name": "Рождество Богородично", "type": "orthodox", "description": descriptions["nativity_theotokos"]}],
         (9, 14): [{"name": "Въздвижение на Светия Кръст (Кръстовден)", "type": "orthodox", "description": descriptions["cross_elevation"]}],
         (9, 22): [{"name": "Ден на Независимостта", "type": "secular", "description": descriptions["independence_day"]}],
+        (10, 1): [{"name": "Покров Богородичен", "type": "orthodox", "description": descriptions["protection_theotokos"]}],
+        (10, 19): [{"name": "Св. Йоан Рилски", "type": "orthodox", "description": descriptions["st_john_of_rila"]}],
+        (11, 21): [{"name": "Въведение Богородично", "type": "orthodox", "description": descriptions["presentation_theotokos"]}],
         (12, 6): [{"name": "Св. Николай Чудотворец (Никулден)", "type": "orthodox", "description": descriptions["st_nicholas"]}],
         (12, 24): [{"name": "Бъдни вечер", "type": "orthodox", "description": descriptions["christmas_eve"]}],
         (12, 25): [{"name": "Рождество Христово", "type": "orthodox"}],
@@ -194,7 +216,6 @@ def generate_calendar_data(start_year, end_year):
 
             unique_events = []
             added_event_names = set()
-            # Prioritize event types for display
             type_priority = ['non-working', 'orthodox', 'secular', 'name-day', 'fasting']
             sorted_events = sorted(events, key=lambda x: type_priority.index(x.get('type', '')) if x.get('type') in type_priority else 99)
 
