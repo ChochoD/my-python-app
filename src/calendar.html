@@ -23,7 +23,7 @@
         .sunday .day-number { color: red; }
         .feasts { margin-top: 5px; }
         .feasts ul { list-style-type: none; padding-left: 0; }
-        .feasts li { display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .feasts li { display: flex; align-items: center; justify-content: center; }
         .feasts li:hover { background-color: #f0f0f0; }
         .feasts li.fasting:before { content: '🌱'; margin-right: 5px; }
         .orthodox-cross { color: purple; margin-right: 5px; font-size: 1.2em; vertical-align: middle; }
@@ -32,20 +32,33 @@
         .orthodox-event { color: purple; }
         .fasting-event { color: green; }
         .current-day { background-color: #ffffcc; border: 2px solid #ffcc00; }
-        .selected-event { background-color: #e0e0e0; }
         .selected-day { background-color: #d0d0d0; }
         #search-results, #date-range-results { margin-top: 1em; }
         #event-details { margin-top: 1em; padding: 1em; border: 1px solid #ccc; text-align: center; }
-        #event-details.orthodox-event { border-color: purple; }
-        #event-details.national-event { border-color: red; }
-        #event-details.fasting-event { border-color: green; }
-        #note-container { margin-top: 1em; padding: 1em; border: 1px solid #ccc; }
+        #event-details .event-item { margin-bottom: 1em; padding: 1em; border: 1px solid #eee; }
+        #event-details .orthodox-event { border-color: purple; }
+        #event-details .national-event { border-color: red; }
+        #event-details .fasting-event { border-color: green; }
+        
+        /* Note Styles */
+        #note-container { margin-top: 1em; padding: 1em; border: 1px solid #ccc; text-align: center; }
         #notes-list { margin-top: 1em; }
-        .note-item { display: flex; align-items: center; margin-bottom: 5px; }
-        .note-item textarea { flex-grow: 1; }
+        .note-item {
+            background-color: #ffffcc; /* Yellow background */
+            border: 1px solid #ffcc00;  /* Yellow border */
+            margin-bottom: 1em;       /* Match event-item */
+            padding: 1em;             /* Match event-item */
+            text-align: center;
+        }
+        .note-item p { 
+            margin: 0;
+            color: #B8860B; /* Darker Yellow font color */
+        }
+        .note-item .buttons { margin-top: 5px; }
         .note-icons-container { position: absolute; top: 5px; right: 5px; display: flex; flex-wrap: wrap; justify-content: flex-end; }
         .note-icon { font-size: 1em; opacity: 0.3; }
         .has-note .note-icon { opacity: 1; }
+
     </style>
 </head>
 <body>
@@ -90,12 +103,18 @@
     <div id="search-results"></div>
     <div id="date-range-results"></div>
     <div id="event-details" class="no-print"></div>
+    
+    <!-- Notes Section -->
     <div id="note-container" class="no-print" style="display: none;">
         <h3 id="note-date"></h3>
         <div id="notes-list"></div>
-        <button id="add-note-btn">Добави нова бележка</button>
-        <button id="save-notes-btn">Запази бележките</button>
+        <div id="note-editor" style="display: none;">
+            <textarea id="note-textarea" rows="4" style="width: 100%;"></textarea>
+            <button id="save-note-btn">Запази</button>
+        </div>
+        <button id="add-note-btn" style="display: none;">Добави нова бележка</button>
     </div>
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             fetch('/calendar-data')
@@ -108,15 +127,17 @@
                     const noteContainer = document.getElementById('note-container');
                     const noteDateHeader = document.getElementById('note-date');
                     const notesList = document.getElementById('notes-list');
+                    const noteEditor = document.getElementById('note-editor');
+                    const noteTextarea = document.getElementById('note-textarea');
+                    const saveNoteBtn = document.getElementById('save-note-btn');
                     const addNoteBtn = document.getElementById('add-note-btn');
-                    const saveNotesBtn = document.getElementById('save-notes-btn');
                     const monthMap = { "януари": 0, "февруари": 1, "март": 2, "април": 3, "май": 4, "юни": 5, "юли": 6, "август": 7, "септември": 8, "октомври": 9, "ноември": 10, "декември": 11 };
                     const monthSelect = document.getElementById('month-select');
                     const yearInput = document.getElementById('year-input');
                     const filterCheckboxes = document.querySelectorAll('#filter-form input[name="filter"]');
-                    let selectedEventElement = null;
                     let selectedDayElement = null;
                     let selectedDateForNote = '';
+                    let notesForSelectedDate = [];
 
                     for (const monthName in monthMap) {
                         const option = document.createElement('option');
@@ -220,7 +241,7 @@
                             }
 
                             const dateString = `${day} ${monthData.month}`;
-                            dayDiv.addEventListener('click', () => handleDayClick(dayDiv, dateString));
+                            dayDiv.addEventListener('click', () => handleDayClick(dayDiv, dateString, monthData.days[day] || []));
 
                             const dayNumber = document.createElement('div');
                             dayNumber.classList.add('day-number');
@@ -254,11 +275,6 @@
 
                                     sortedFeasts.forEach(feast => {
                                         const feastItem = document.createElement('li');
-                                        feastItem.addEventListener('click', (e) => {
-                                            e.stopPropagation(); 
-                                            showEventDetails(feast, dateString, feastItem);
-                                        });
-
                                         if (feast.name.toLowerCase().includes('пост')) { feastItem.classList.add('fasting-event'); }
                                         else if (feast.type === 'orthodox') { feastItem.classList.add('orthodox-event'); }
                                         else if (feast.type === 'secular' || feast.type === 'non-working') { feastItem.classList.add('national-event'); }
@@ -286,7 +302,7 @@
                         monthContainer.appendChild(monthGrid);
                         return monthContainer;
                     }
-                    
+
                     function getNotes(dateString) {
                         const notesJSON = localStorage.getItem(dateString);
                         if (!notesJSON) return [];
@@ -294,18 +310,21 @@
                             const notes = JSON.parse(notesJSON);
                             return Array.isArray(notes) ? notes : [notes];
                         } catch (error) {
-                            return [notesJSON];
+                            return [notesJSON]; 
                         }
                     }
 
-                    function saveNotes(dateString, notes) {
-                        if (notes.length > 0) {
+                    function saveNotesToStorage(dateString, notes) {
+                        if (notes && notes.length > 0) {
                             localStorage.setItem(dateString, JSON.stringify(notes));
                         } else {
                             localStorage.removeItem(dateString);
                         }
+                        if (selectedDayElement) {
+                            updateNoteIcons(selectedDayElement, dateString);
+                        }
                     }
-
+                    
                     function updateNoteIcons(dayElement, dateString) {
                         const noteIconsContainer = dayElement.querySelector('.note-icons-container');
                         noteIconsContainer.innerHTML = '';
@@ -323,103 +342,93 @@
                         }
                     }
 
-                    function handleDayClick(dayElement, dateString) {
+                    function handleDayClick(dayElement, dateString, feasts) {
                         if (selectedDayElement) {
                             selectedDayElement.classList.remove('selected-day');
                         }
                         dayElement.classList.add('selected-day');
                         selectedDayElement = dayElement;
-
                         selectedDateForNote = dateString;
-                        noteContainer.style.display = 'block';
-                        noteDateHeader.textContent = `Бележки за ${dateString}`;
-                        
-                        renderNotesEditor(dateString);
-                    }
 
-                    function renderNotesEditor(dateString) {
-                        notesList.innerHTML = '';
-                        const notes = getNotes(dateString);
-                        if (notes.length > 0) {
-                            notes.forEach((note, index) => {
-                                createNoteItem(note, index);
+                        // Display feasts
+                        eventDetailsDiv.innerHTML = '';
+                        if (feasts.length > 0) {
+                            const dateElement = document.createElement('h4');
+                            dateElement.textContent = dateString;
+                            eventDetailsDiv.appendChild(dateElement);
+                            feasts.forEach(feast => {
+                                const eventItem = document.createElement('div');
+                                eventItem.classList.add('event-item');
+                                let icon = '', className = '';
+                                if (feast.name.toLowerCase().includes('пост')) { icon = '🌱'; className = 'fasting-event'; }
+                                else if (feast.type === 'orthodox') { icon = '✝'; className = 'orthodox-event'; }
+                                else if (feast.type === 'secular' || feast.type === 'non-working') { icon = '🔴'; className = 'national-event'; }
+                                eventItem.classList.add(className);
+                                const title = document.createElement('h3');
+                                title.textContent = `${icon} ${feast.name}`;
+                                eventItem.appendChild(title);
+                                const description = document.createElement('p');
+                                description.textContent = feast.description || 'Няма допълнителна информация.';
+                                eventItem.appendChild(description);
+                                eventDetailsDiv.appendChild(eventItem);
                             });
                         } else {
-                            createNoteItem('', 0);
+                            eventDetailsDiv.innerHTML = '<p>Няма събития за този ден.</p>';
+                        }
+
+                        // Handle Notes
+                        noteContainer.style.display = 'block';
+                        noteDateHeader.textContent = `Бележки за ${dateString}`;
+                        notesForSelectedDate = getNotes(dateString);
+                        renderNotesView();
+                    }
+                    
+                    function renderNotesView() {
+                        notesList.innerHTML = '';
+                        noteEditor.style.display = 'none';
+
+                        if (notesForSelectedDate.length > 0) {
+                            notesForSelectedDate.forEach((note, index) => {
+                                const noteItem = document.createElement('div');
+                                noteItem.classList.add('note-item');
+                                
+                                const noteText = document.createElement('p');
+                                noteText.textContent = note;
+                                noteItem.appendChild(noteText);
+                                
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.textContent = 'Изтрий тази бележка';
+                                deleteBtn.onclick = () => {
+                                    notesForSelectedDate.splice(index, 1);
+                                    saveNotesToStorage(selectedDateForNote, notesForSelectedDate);
+                                    renderNotesView();
+                                };
+                                noteItem.appendChild(deleteBtn);
+                                notesList.appendChild(noteItem);
+                            });
+                            addNoteBtn.style.display = 'block';
+                        } else {
+                            noteEditor.style.display = 'block';
+                            noteTextarea.value = '';
+                            addNoteBtn.style.display = 'none';
                         }
                     }
 
-                    function createNoteItem(text, index) {
-                        const noteItem = document.createElement('div');
-                        noteItem.classList.add('note-item');
+                    addNoteBtn.onclick = () => {
+                        noteEditor.style.display = 'block';
+                        noteTextarea.value = '';
+                        noteTextarea.focus();
+                        addNoteBtn.style.display = 'none';
+                    };
 
-                        const textarea = document.createElement('textarea');
-                        textarea.rows = 2;
-                        textarea.value = text;
-                        noteItem.appendChild(textarea);
-
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.textContent = 'Изтрий';
-                        deleteBtn.addEventListener('click', () => {
-                            noteItem.remove();
-                        });
-                        noteItem.appendChild(deleteBtn);
-                        notesList.appendChild(noteItem);
-                    }
-
-                    addNoteBtn.addEventListener('click', () => {
-                        createNoteItem('', notesList.children.length);
-                    });
-
-                    saveNotesBtn.addEventListener('click', () => {
-                        const noteTextareas = notesList.querySelectorAll('textarea');
-                        const notes = Array.from(noteTextareas).map(textarea => textarea.value).filter(note => note.trim() !== '');
-                        saveNotes(selectedDateForNote, notes);
-                        
-                        if (selectedDayElement) {
-                            updateNoteIcons(selectedDayElement, selectedDateForNote);
+                    saveNoteBtn.onclick = () => {
+                        const newNote = noteTextarea.value.trim();
+                        if (newNote) {
+                            notesForSelectedDate.push(newNote);
+                            saveNotesToStorage(selectedDateForNote, notesForSelectedDate);
                         }
-                        noteContainer.style.display = 'none';
-                    });
-
-                    function showEventDetails(feast, date, element) {
-                        if (selectedEventElement) {
-                            selectedEventElement.classList.remove('selected-event');
-                        }
-                        element.classList.add('selected-event');
-                        selectedEventElement = element;
-
-                        eventDetailsDiv.innerHTML = '';
-                        eventDetailsDiv.className = 'no-print'; 
-
-                        let icon = '';
-                        let className = '';
-
-                        if (feast.name.toLowerCase().includes('пост')) {
-                            icon = '🌱';
-                            className = 'fasting-event';
-                        } else if (feast.type === 'orthodox') {
-                            icon = '✝';
-                            className = 'orthodox-event';
-                        } else if (feast.type === 'secular' || feast.type === 'non-working') {
-                            icon = '🔴';
-                            className = 'national-event';
-                        }
-
-                        eventDetailsDiv.classList.add(className);
-                        
-                        const dateElement = document.createElement('h4');
-                        dateElement.textContent = date;
-                        eventDetailsDiv.appendChild(dateElement);
-
-                        const title = document.createElement('h3');
-                        title.textContent = `${icon} ${feast.name}`;
-                        eventDetailsDiv.appendChild(title);
-
-                        const description = document.createElement('p');
-                        description.textContent = feast.description || 'Няма допълнителна информация.';
-                        eventDetailsDiv.appendChild(description);
-                    }
+                        renderNotesView();
+                    };
 
                     function showSearchResults(results) {
                         calendarDiv.style.display = 'none';
@@ -442,10 +451,13 @@
                                         currentMonthIndex = targetIndex;
                                         renderCalendar();
                                         const dateString = `${result.day} ${result.month}`;
-                                        showEventDetails(result.feast, dateString, e.currentTarget);
-                                        
                                         const dayElement = findDayElementByDateString(dateString);
-                                        if(dayElement) handleDayClick(dayElement, dateString);
+                                        if(dayElement) {
+                                            const dayNumber = result.day;
+                                            const monthData = data[targetIndex];
+                                            const feasts = monthData.days[dayNumber] || [];
+                                            handleDayClick(dayElement, dateString, feasts);
+                                        }
                                     }
                                 });
                                 resultItem.appendChild(link);
@@ -459,12 +471,14 @@
                     
                     function findDayElementByDateString(dateString) {
                         const dayElements = document.querySelectorAll('.day');
-                        for (const dayEl of dayElements) {
+                       for (const dayEl of dayElements) {
                             const dayNumberEl = dayEl.querySelector('.day-number');
-                            const dayNumber = dayNumberEl.firstChild.textContent.trim();
-                            const monthName = document.getElementById('current-month-year').textContent;
-                            if (`${dayNumber} ${monthName}` === dateString) {
-                                return dayEl;
+                            if (dayNumberEl) {
+                                const dayNumber = dayNumberEl.textContent.trim();
+                                const monthName = document.getElementById('current-month-year').textContent;
+                                if (`${dayNumber} ${monthName}` === dateString) {
+                                    return dayEl;
+                                }
                             }
                         }
                         return null;
@@ -486,7 +500,7 @@
                             });
                             dateRangeResultsDiv.appendChild(resultList);
                         } else {
-                            dateRangeResultsDiv.textContent = 'Няма събития в избрания период.';
+                            dateRangeResultsDiv.textContent = 'Няма събития в избрания. ';
                         }
                     }
 
