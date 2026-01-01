@@ -59,7 +59,41 @@ def generate_calendar_data(start_year, end_year):
         "cyril_methodius_day": "Ден на славянската писменост и култура.",
         "unification_day": "Ден на Съединението.",
         "independence_day": "Ден на Независимостта.",
-        "non_working": "Официален почивен ден."
+        "non_working": "Официален почивен ден.",
+
+        # Name Days
+        "nameday_description": "На този ден празнуват хората, носещи имена, свързани със светеца, който се чества."
+    }
+
+    name_days = {
+        (1, 1): ["Васил", "Василка", "Веселин", "Веселина"],
+        (1, 6): ["Йордан", "Йорданка", "Богдан", "Богдана"],
+        (1, 7): ["Иван", "Ивана", "Иванка", "Йоан", "Йоана"],
+        (1, 17): ["Антон", "Антония", "Дончо", "Донка"],
+        (1, 18): ["Атанас", "Атанаска"],
+        (2, 10): ["Харалампи", "Валентин", "Валентина"],
+        (3, 1): ["Марта", "Мартин"],
+        (3, 25): ["Благовест", "Благовеста"],
+        (4, 25): ["Марк"],
+        (5, 5): ["Ирина", "Мирослав"],
+        (5, 6): ["Георги", "Георгина", "Гергана"],
+        (5, 11): ["Кирил", "Методий"],
+        (5, 21): ["Константин", "Елена"],
+        (6, 24): ["Еньо", "Янко", "Янка"],
+        (6, 29): ["Петър", "Павел", "Петя", "Полина"],
+        (7, 20): ["Илия", "Илияна"],
+        (8, 15): ["Мария", "Мариана", "Марио"],
+        (8, 26): ["Адриан", "Адриана"],
+        (8, 30): ["Александър", "Александра"],
+        (9, 17): ["Вяра", "Надежда", "Любов", "София"],
+        (10, 14): ["Петко", "Петка"],
+        (10, 26): ["Димитър", "Димитрина"],
+        (11, 8): ["Ангел", "Ангелина", "Михаил", "Михаела"],
+        (11, 25): ["Екатерина"],
+        (11, 30): ["Андрей"],
+        (12, 6): ["Никола", "Николай", "Николина"],
+        (12, 22): ["Ана", "Анна"],
+        (12, 27): ["Стефан", "Стефка", "Стоян", "Стоянка"]
     }
 
     fixed_holidays = {
@@ -107,6 +141,10 @@ def generate_calendar_data(start_year, end_year):
         zadushnica_st_michael = st_michael_day - timedelta(days=(st_michael_day.weekday() + 2) % 7)
         all_events.setdefault(zadushnica_st_michael, []).extend([{"name": "Архангелова задушница", "type": "orthodox", "description": descriptions["zadushnica_before_st_michael"]}])
 
+        for (month, day), names in name_days.items():
+            event = {"name": f"Имен ден: {', '.join(names)}", "type": "name-day", "description": descriptions["nameday_description"]}
+            all_events.setdefault(date(year, month, day), []).append(event)
+
         for (month, day), events in fixed_holidays.items():
             all_events.setdefault(date(year, month, day), []).extend(events)
         for day, events in movable_holidays.items():
@@ -128,7 +166,7 @@ def generate_calendar_data(start_year, end_year):
             all_events.setdefault(day, []).append({"name": "Велик пост", "type": "fasting", "description": descriptions["great_lent"]})
         
         # Apostles' Fast
-        apostles_fast_start = pentecost_date + timedelta(days=8) # Starts on Monday after All Saints' Sunday
+        apostles_fast_start = pentecost_date + timedelta(days=8)
         apostles_fast_end = date(year, 6, 28)
         if apostles_fast_start <= apostles_fast_end:
             for i in range((apostles_fast_end - apostles_fast_start).days + 1):
@@ -156,7 +194,11 @@ def generate_calendar_data(start_year, end_year):
 
             unique_events = []
             added_event_names = set()
-            for e in sorted(events, key=lambda x: x.get('type', '')):
+            # Prioritize event types for display
+            type_priority = ['non-working', 'orthodox', 'secular', 'name-day', 'fasting']
+            sorted_events = sorted(events, key=lambda x: type_priority.index(x.get('type', '')) if x.get('type') in type_priority else 99)
+
+            for e in sorted_events:
                 if e['name'] not in added_event_names:
                     unique_events.append(e)
                     added_event_names.add(e['name'])
