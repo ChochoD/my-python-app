@@ -23,7 +23,7 @@
         .sunday .day-number { color: red; }
         .feasts { margin-top: 5px; }
         .feasts ul { list-style-type: none; padding-left: 0; }
-        .feasts li { display: flex; align-items: center; justify-content: center; }
+        .feasts li { display: flex; align-items: baseline; justify-content: flex-start; }
         .feasts li:hover { background-color: #f0f0f0; }
         .feasts li.fasting:before { content: '🌱'; margin-right: 5px; }
         .orthodox-cross { color: purple; margin-right: 5px; font-size: 1.2em; vertical-align: middle; }
@@ -73,6 +73,7 @@
             border: 1px solid #eee;
             flex: 1 1 200px; /* Allow items to grow and shrink */
             max-width: 300px;
+            text-align: left;
         }
         #event-details .orthodox-event { border-color: purple; }
         #event-details .national-event { border-color: red; }
