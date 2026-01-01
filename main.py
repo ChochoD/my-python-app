@@ -1,15 +1,15 @@
 import os
-from flask import Flask, send_file, jsonify
+from flask import Flask, render_template, jsonify
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='src')
 
 @app.route("/")
 def index():
-    return send_file('src/calendar.html')
+    return render_template('calendar.html')
 
 @app.route("/calendar")
 def calendar():
-    return send_file('src/calendar.html')
+    return render_template('calendar.html')
 
 @app.route("/calendar-data")
 def calendar_data():

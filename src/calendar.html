@@ -27,37 +27,106 @@
         .feasts li:hover { background-color: #f0f0f0; }
         .feasts li.fasting:before { content: '🌱'; margin-right: 5px; }
         .orthodox-cross { color: purple; margin-right: 5px; font-size: 1.2em; vertical-align: middle; }
-        .feasts li.non-working-day:before { content: '🔴'; margin-right: 5px; color: red; font-size: 1em; vertical-align: middle; }
         .national-event { color: red; }
         .orthodox-event { color: purple; }
         .fasting-event { color: green; }
         .current-day { background-color: #ffffcc; border: 2px solid #ffcc00; }
         .selected-day { background-color: #d0d0d0; }
         #search-results, #date-range-results { margin-top: 1em; }
-        #event-details { margin-top: 1em; padding: 1em; border: 1px solid #ccc; text-align: center; }
-        #event-details .event-item { margin-bottom: 1em; padding: 1em; border: 1px solid #eee; }
+
+        #details-container {
+            display: none;
+            gap: 1em;
+        }
+
+        #event-details {
+            padding: 1em;
+            border: 1px solid #ccc;
+            text-align: center;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #event-details h4 {
+            width: 100%; /* Make date header full width */
+        }
+
+        .event-items-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1em;
+            width: 100%;
+        }
+
+        #note-container {
+            padding: 1em;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        #event-details .event-item { 
+            margin-bottom: 1em; 
+            padding: 1em; 
+            border: 1px solid #eee;
+            flex: 1 1 200px; /* Allow items to grow and shrink */
+            max-width: 300px;
+        }
         #event-details .orthodox-event { border-color: purple; }
         #event-details .national-event { border-color: red; }
         #event-details .fasting-event { border-color: green; }
         
         /* Note Styles */
-        #note-container { margin-top: 1em; padding: 1em; border: 1px solid #ccc; text-align: center; }
-        #notes-list { margin-top: 1em; }
+        #notes-list {
+            margin-top: 1em;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1em;
+        }
         .note-item {
             background-color: #ffffcc; /* Yellow background */
             border: 1px solid #ffcc00;  /* Yellow border */
             margin-bottom: 1em;       /* Match event-item */
             padding: 1em;             /* Match event-item */
             text-align: center;
+            flex: 1 1 200px;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
         .note-item p { 
             margin: 0;
-            color: #B8860B; /* Darker Yellow font color */
+            margin-bottom: 10px;
+            color: #333; /* Darker font color for better readability */
+            word-wrap: break-word;
         }
-        .note-item .buttons { margin-top: 5px; }
+        .note-item .buttons { 
+            display: flex; 
+            justify-content: center; 
+            gap: 10px; /* Spacing between buttons */
+            margin-top: auto; /* Push buttons to the bottom */
+        }
         .note-icons-container { position: absolute; top: 5px; right: 5px; display: flex; flex-wrap: wrap; justify-content: flex-end; }
         .note-icon { font-size: 1em; opacity: 0.3; }
         .has-note .note-icon { opacity: 1; }
+
+        #add-note-btn {
+            display: none; /* Initially hidden */
+            margin: 1em auto 0;
+        }
+
+        @media (min-width: 800px) {
+            #details-container {
+                display: none;
+                flex-direction: row;
+            }
+            #event-details, #note-container {
+                flex: 1;
+            }
+        }
 
     </style>
 </head>
@@ -102,17 +171,18 @@
     <div id="calendar"></div>
     <div id="search-results"></div>
     <div id="date-range-results"></div>
-    <div id="event-details" class="no-print"></div>
     
-    <!-- Notes Section -->
-    <div id="note-container" class="no-print" style="display: none;">
-        <h3 id="note-date"></h3>
-        <div id="notes-list"></div>
-        <div id="note-editor" style="display: none;">
-            <textarea id="note-textarea" rows="4" style="width: 100%;"></textarea>
-            <button id="save-note-btn">Запази</button>
+    <div id="details-container" class="no-print">
+        <div id="event-details"></div>
+        <div id="note-container">
+            <h3 id="note-date"></h3>
+            <div id="notes-list"></div>
+            <div id="note-editor" style="display: none;">
+                <textarea id="note-textarea" rows="4" style="width: 100%;"></textarea>
+                <button id="save-note-btn">Запази</button>
+            </div>
+            <button id="add-note-btn">Добави нова бележка</button>
         </div>
-        <button id="add-note-btn" style="display: none;">Добави нова бележка</button>
     </div>
 
     <script>
@@ -123,6 +193,7 @@
                     const calendarDiv = document.getElementById('calendar');
                     const searchResultsDiv = document.getElementById('search-results');
                     const dateRangeResultsDiv = document.getElementById('date-range-results');
+                    const detailsContainer = document.getElementById('details-container');
                     const eventDetailsDiv = document.getElementById('event-details');
                     const noteContainer = document.getElementById('note-container');
                     const noteDateHeader = document.getElementById('note-date');
@@ -138,6 +209,7 @@
                     let selectedDayElement = null;
                     let selectedDateForNote = '';
                     let notesForSelectedDate = [];
+                    let editingNoteIndex = -1; // -1 for new note, >= 0 for editing
 
                     for (const monthName in monthMap) {
                         const option = document.createElement('option');
@@ -174,8 +246,7 @@
                         calendarDiv.innerHTML = ''; 
                         searchResultsDiv.innerHTML = '';
                         dateRangeResultsDiv.innerHTML = '';
-                        eventDetailsDiv.innerHTML = '';
-                        noteContainer.style.display = 'none';
+                        detailsContainer.style.display = 'none';
                         calendarDiv.style.display = 'block';
                         
                         const filters = getSelectedFilters();
@@ -275,17 +346,26 @@
 
                                     sortedFeasts.forEach(feast => {
                                         const feastItem = document.createElement('li');
-                                        if (feast.name.toLowerCase().includes('пост')) { feastItem.classList.add('fasting-event'); }
-                                        else if (feast.type === 'orthodox') { feastItem.classList.add('orthodox-event'); }
-                                        else if (feast.type === 'secular' || feast.type === 'non-working') { feastItem.classList.add('national-event'); }
+                                        let icon = '';
+                                        if (feast.name.toLowerCase().includes('пост')) { 
+                                            feastItem.classList.add('fasting-event'); 
+                                            icon = '🌱';
+                                        } else if (feast.type === 'orthodox') { 
+                                            feastItem.classList.add('orthodox-event');
+                                            icon = '✝';
+                                        } else if (feast.type === 'secular' || feast.type === 'non-working') { 
+                                            feastItem.classList.add('national-event'); 
+                                            icon = '🇧🇬';
+                                        }
 
-                                        if (feast.type === 'non-working') { feastItem.classList.add('non-working-day'); }
-                                        else if (feast.name.toLowerCase().includes('пост')) { feastItem.classList.add('fasting'); }
-                                        else if (feast.type === 'orthodox') {
-                                            const cross = document.createElement('span');
-                                            cross.classList.add('orthodox-cross');
-                                            cross.textContent = '✝';
-                                            feastItem.appendChild(cross);
+                                        if (icon) {
+                                            const iconSpan = document.createElement('span');
+                                            iconSpan.textContent = icon;
+                                            iconSpan.style.marginRight = '5px';
+                                            if (icon === '✝') {
+                                                iconSpan.classList.add('orthodox-cross');
+                                            }
+                                            feastItem.appendChild(iconSpan);
                                         }
 
                                         const feastName = document.createElement('span');
@@ -350,19 +430,32 @@
                         selectedDayElement = dayElement;
                         selectedDateForNote = dateString;
 
-                        // Display feasts
+                        const displayStyle = window.innerWidth >= 800 ? 'flex' : 'block';
+                        detailsContainer.style.display = displayStyle;
+
                         eventDetailsDiv.innerHTML = '';
                         if (feasts.length > 0) {
                             const dateElement = document.createElement('h4');
                             dateElement.textContent = dateString;
                             eventDetailsDiv.appendChild(dateElement);
+
+                            const eventItemsContainer = document.createElement('div');
+                            eventItemsContainer.className = 'event-items-container';
+
                             feasts.forEach(feast => {
                                 const eventItem = document.createElement('div');
                                 eventItem.classList.add('event-item');
                                 let icon = '', className = '';
-                                if (feast.name.toLowerCase().includes('пост')) { icon = '🌱'; className = 'fasting-event'; }
-                                else if (feast.type === 'orthodox') { icon = '✝'; className = 'orthodox-event'; }
-                                else if (feast.type === 'secular' || feast.type === 'non-working') { icon = '🔴'; className = 'national-event'; }
+                                if (feast.name.toLowerCase().includes('пост')) { 
+                                    icon = '🌱'; 
+                                    className = 'fasting-event'; 
+                                } else if (feast.type === 'orthodox') { 
+                                    icon = '✝'; 
+                                    className = 'orthodox-event'; 
+                                } else if (feast.type === 'secular' || feast.type === 'non-working') { 
+                                    icon = '🇧🇬'; 
+                                    className = 'national-event'; 
+                                }
                                 eventItem.classList.add(className);
                                 const title = document.createElement('h3');
                                 title.textContent = `${icon} ${feast.name}`;
@@ -370,14 +463,14 @@
                                 const description = document.createElement('p');
                                 description.textContent = feast.description || 'Няма допълнителна информация.';
                                 eventItem.appendChild(description);
-                                eventDetailsDiv.appendChild(eventItem);
+                                eventItemsContainer.appendChild(eventItem);
                             });
+                            eventDetailsDiv.appendChild(eventItemsContainer);
                         } else {
-                            eventDetailsDiv.innerHTML = '<p>Няма събития за този ден.</p>';
+                            eventDetailsDiv.innerHTML = '<h4>Няма събития за този ден.</h4>';
                         }
 
                         // Handle Notes
-                        noteContainer.style.display = 'block';
                         noteDateHeader.textContent = `Бележки за ${dateString}`;
                         notesForSelectedDate = getNotes(dateString);
                         renderNotesView();
@@ -386,6 +479,7 @@
                     function renderNotesView() {
                         notesList.innerHTML = '';
                         noteEditor.style.display = 'none';
+                        editingNoteIndex = -1;
 
                         if (notesForSelectedDate.length > 0) {
                             notesForSelectedDate.forEach((note, index) => {
@@ -396,18 +490,36 @@
                                 noteText.textContent = note;
                                 noteItem.appendChild(noteText);
                                 
+                                const buttonsDiv = document.createElement('div');
+                                buttonsDiv.classList.add('buttons');
+
+                                const editBtn = document.createElement('button');
+                                editBtn.textContent = 'Редактирай';
+                                editBtn.onclick = () => {
+                                    editingNoteIndex = index;
+                                    noteTextarea.value = notesForSelectedDate[index];
+                                    noteEditor.style.display = 'block';
+                                    notesList.style.display = 'none';
+                                    addNoteBtn.style.display = 'none';
+                                };
+
                                 const deleteBtn = document.createElement('button');
-                                deleteBtn.textContent = 'Изтрий тази бележка';
+                                deleteBtn.textContent = 'Изтрий';
                                 deleteBtn.onclick = () => {
                                     notesForSelectedDate.splice(index, 1);
                                     saveNotesToStorage(selectedDateForNote, notesForSelectedDate);
                                     renderNotesView();
                                 };
-                                noteItem.appendChild(deleteBtn);
+
+                                buttonsDiv.appendChild(editBtn);
+                                buttonsDiv.appendChild(deleteBtn);
+                                noteItem.appendChild(buttonsDiv);
                                 notesList.appendChild(noteItem);
                             });
+                            notesList.style.display = 'flex';
                             addNoteBtn.style.display = 'block';
                         } else {
+                            notesList.style.display = 'none';
                             noteEditor.style.display = 'block';
                             noteTextarea.value = '';
                             addNoteBtn.style.display = 'none';
@@ -415,16 +527,22 @@
                     }
 
                     addNoteBtn.onclick = () => {
+                        editingNoteIndex = -1;
                         noteEditor.style.display = 'block';
                         noteTextarea.value = '';
                         noteTextarea.focus();
                         addNoteBtn.style.display = 'none';
+                        notesList.style.display = 'none';
                     };
 
                     saveNoteBtn.onclick = () => {
                         const newNote = noteTextarea.value.trim();
                         if (newNote) {
-                            notesForSelectedDate.push(newNote);
+                            if (editingNoteIndex > -1) {
+                                notesForSelectedDate[editingNoteIndex] = newNote;
+                            } else {
+                                notesForSelectedDate.push(newNote);
+                            }
                             saveNotesToStorage(selectedDateForNote, notesForSelectedDate);
                         }
                         renderNotesView();
@@ -434,8 +552,7 @@
                         calendarDiv.style.display = 'none';
                         searchResultsDiv.innerHTML = '';
                         dateRangeResultsDiv.innerHTML = '';
-                        eventDetailsDiv.innerHTML = '';
-                        noteContainer.style.display = 'none';
+                        detailsContainer.style.display = 'none';
 
                         if (results.length > 0) {
                             const resultList = document.createElement('ul');
@@ -488,8 +605,7 @@
                         calendarDiv.style.display = 'none';
                         searchResultsDiv.innerHTML = '';
                         dateRangeResultsDiv.innerHTML = '';
-                        eventDetailsDiv.innerHTML = '';
-                        noteContainer.style.display = 'none';
+                        detailsContainer.style.display = 'none';
 
                         if (results.length > 0) {
                             const resultList = document.createElement('ul');
