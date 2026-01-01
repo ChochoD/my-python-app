@@ -73,38 +73,95 @@ def generate_calendar_data(start_year, end_year):
     }
 
     name_days = {
-        (1, 1): ["Васил", "Василка", "Веселин", "Веселина"],
-        (1, 6): ["Йордан", "Йорданка", "Богдан", "Богдана"],
-        (1, 7): ["Иван", "Ивана", "Иванка", "Йоан", "Йоана"],
-        (1, 17): ["Антон", "Антония", "Дончо", "Донка"],
-        (1, 18): ["Атанас", "Атанаска"],
+        (1, 1): ["Васил", "Василка", "Веселин", "Веселина", "Весела"],
+        (1, 2): ["Силвестър", "Силвия"],
+        (1, 6): ["Йордан", "Йорданка", "Данчо", "Богдан", "Богдана", "Богомил", "Найден"],
+        (1, 7): ["Иван", "Ивана", "Иванка", "Йоан", "Йоана", "Калоян", "Иво", "Йовко", "Йото", "Ванина", "Жана"],
+        (1, 9): ["Юлиян", "Юлияна"],
+        (1, 11): ["Богдан", "Теодосий"],
+        (1, 12): ["Татяна", "Таня"],
+        (1, 14): ["Нина"],
+        (1, 17): ["Антон", "Антония", "Андон", "Дончо", "Донка"],
+        (1, 18): ["Атанас", "Атанаска", "Наско"],
+        (1, 20): ["Евтим", "Евтимия"],
+        (1, 21): ["Максим", "Максима"],
+        (1, 25): ["Григор", "Григорена"],
         (1, 30): ["Василий", "Григорий", "Йоан"],
-        (2, 10): ["Харалампи", "Валентин", "Валентина"],
-        (3, 1): ["Марта", "Мартин"],
-        (3, 25): ["Благовест", "Благовеста"],
-        (4, 25): ["Марк"],
-        (5, 5): ["Ирина", "Мирослав"],
-        (5, 6): ["Георги", "Георгина", "Гергана"],
-        (5, 11): ["Кирил", "Методий"],
-        (5, 21): ["Константин", "Елена"],
-        (6, 24): ["Еньо", "Янко", "Янка"],
-        (6, 29): ["Петър", "Павел", "Петя", "Полина"],
-        (7, 20): ["Илия", "Илияна"],
-        (8, 15): ["Мария", "Мариана", "Марио"],
-        (8, 26): ["Адриан", "Адриана"],
-        (8, 30): ["Александър", "Александра"],
-        (9, 17): ["Вяра", "Надежда", "Любов", "София"],
+        (2, 1): ["Трифон", "Лозан", "Лоза"],
+        (2, 3): ["Симеон", "Симона", "Моника"],
+        (2, 4): ["Желязко", "Добрин"],
+        (2, 6): ["Доротея", "Огнян", "Пламен", "Пламена"],
+        (2, 10): ["Харалампи", "Валентин", "Валентина", "Ламби"],
+        (2, 13): ["Евлоги"],
+        (2, 14): ["Трифон Зарезан"],
+        (3, 1): ["Марта", "Мартин", "Мартина"],
+        (3, 6): ["Красимир", "Красимира"],
+        (3, 9): ["Младен", "Младена"],
+        (3, 17): ["Алексей", "Алекси"],
+        (3, 22): ["Емил", "Емилия", "Емануил"],
+        (3, 24): ["Захари", "Захарина"],
+        (3, 25): ["Благовест", "Благовеста", "Благой", "Евангелина"],
+        (4, 1): ["Лидия"],
+        (4, 6): ["Страхил"],
+        (4, 14): ["Мартин"],
+        (4, 18): ["Виктор", "Виктория"],
+        (4, 25): ["Марк", "Марко"],
+        (4, 26): ["Габриела"],
+        (5, 2): ["Борис", "Боряна", "Борислава"],
+        (5, 5): ["Ирина", "Мирослав", "Мира"],
+        (5, 6): ["Георги", "Георгина", "Гергана", "Гинка", "Гоце"],
+        (5, 11): ["Кирил", "Кирилка", "Методий", "Методия"],
+        (5, 21): ["Константин", "Елена", "Костадин", "Костадинка", "Динко", "Ели"],
+        (6, 24): ["Еньо", "Енчо", "Яни", "Яна", "Янко", "Янка", "Дияна", "Диан", "Диана"],
+        (6, 29): ["Петър", "Павел", "Петя", "Полина", "Павлина", "Камен"],
+        (6, 30): ["Апостол"],
+        (7, 1): ["Дамян", "Дамяна"],
+        (7, 7): ["Неделя", "Недялко", "Недялка"],
+        (7, 15): ["Владимир", "Владислава", "Господин"],
+        (7, 16): ["Юлия", "Юлиан"],
+        (7, 17): ["Марин", "Марина"],
+        (7, 20): ["Илия", "Илияна", "Илко", "Илка"],
+        (7, 22): ["Магдалена", "Миглена"],
+        (7, 25): ["Анна"],
+        (7, 27): ["Пантелей", "Панчо"],
+        (8, 8): ["Емилиян"],
+        (8, 15): ["Мария", "Мариана", "Марио", "Марияна", "Мара"],
+        (8, 20): ["Самуил"],
+        (8, 26): ["Адриан", "Адриана", "Наталия"],
+        (8, 29): ["Анастас", "Анастасия"],
+        (8, 30): ["Александър", "Александра", "Алекс", "Цанко"],
+        (9, 1): ["Симеон", "Симона"],
+        (9, 5): ["Захари", "Елисавета"],
+        (9, 16): ["Людмил", "Людмила"],
+        (9, 17): ["София", "Вяра", "Надежда", "Любов", "Любомир", "Любомира"],
+        (9, 23): ["Поликсена"],
         (10, 1): ["Покров"],
-        (10, 14): ["Петко", "Петка"],
+        (10, 5): ["Игор"],
+        (10, 14): ["Петко", "Петка", "Пенчо", "Пенка"],
+        (10, 18): ["Злата", "Златина"],
         (10, 19): ["Йоан", "Иван"],
-        (10, 26): ["Димитър", "Димитрина"],
-        (11, 8): ["Ангел", "Ангелина", "Михаил", "Михаела"],
+        (10, 26): ["Димитър", "Димитрина", "Димо", "Димка", "Митра"],
+        (10, 27): ["Нестор"],
+        (11, 4): ["Павел"],
+        (11, 8): ["Ангел", "Ангелина", "Михаил", "Михаела", "Рангел", "Райна", "Радко"],
+        (11, 11): ["Виктор", "Виктория", "Мина"],
+        (11, 14): ["Филип", "Филипа"],
+        (11,16): ["Матей"],
         (11, 21): ["Въведение"],
-        (11, 25): ["Екатерина"],
-        (11, 30): ["Андрей"],
-        (12, 6): ["Никола", "Николай", "Николина"],
-        (12, 22): ["Ана", "Анна"],
-        (12, 27): ["Стефан", "Стефка", "Стоян", "Стоянка"]
+        (11, 24): ["Екатерина", "Катя"],
+        (11, 25): ["Климент"],
+        (11, 26): ["Стилиян", "Стилияна"],
+        (11, 30): ["Андрей", "Андрея"],
+        (12, 5): ["Сава", "Савка"],
+        (12, 6): ["Никола", "Николай", "Николина", "Нина", "Ненка", "Кольо"],
+        (12, 9): ["Анна", "Анка"],
+        (12, 17): ["Данаил", "Даниел", "Даниела"],
+        (12, 20): ["Игнат", "Огнян", "Пламен"],
+        (12, 22): ["Анастасия"],
+        (12, 24): ["Евгени", "Евгения", "Жени"],
+        (12, 25): ["Христо", "Христина", "Радослав", "Радостина", "Божидар"],
+        (12, 26): ["Йосиф", "Давид"],
+        (12, 27): ["Стефан", "Стефка", "Стоян", "Стоянка", "Стамен", "Цоньо", "Цонка"]
     }
 
     fixed_holidays = {
@@ -142,23 +199,39 @@ def generate_calendar_data(start_year, end_year):
     for year in range(start_year, end_year + 1):
         all_events = {}
         easter_date = get_orthodox_easter(year)
+        
+        # Add movable holidays based on Easter date
+        todorovden_offset = (easter_date.weekday() - 5) % 7
+        todorovden_date = easter_date - timedelta(days=48 + todorovden_offset)
+
+        # Palm Sunday is the Sunday before Easter
+        palm_sunday = easter_date - timedelta(days=7)
+        # Lazarovden is the Saturday before Palm Sunday
+        lazarovden = palm_sunday - timedelta(days=1)
+        
         pentecost_date = easter_date + timedelta(days=49)
 
         movable_holidays = {
             easter_date - timedelta(days=57): [{"name": "Месопустна задушница", "type": "orthodox", "description": descriptions["zadushnica_before_great_lent"]}],
             easter_date - timedelta(days=49): [{"name": "Сирни заговезни", "type": "orthodox", "description": descriptions["sirni_zagovezni"]}],
-            easter_date - timedelta(days=42): [{"name": "Тодоровден", "type": "orthodox", "description": descriptions["todorovden"]}],
-            easter_date - timedelta(days=8): [{"name": "Лазаровден", "type": "orthodox", "description": descriptions["lazarovden"]}],
-            easter_date - timedelta(days=7): [{"name": "Цветница", "type": "orthodox", "description": descriptions["palm_sunday"]}],
+            todorovden_date: [{"name": "Тодоровден", "type": "orthodox", "description": descriptions["todorovden"]}],
+            lazarovden: [{"name": "Лазаровден", "type": "orthodox", "description": descriptions["lazarovden"]}],
+            palm_sunday: [{"name": "Цветница", "type": "orthodox", "description": descriptions["palm_sunday"]}],
             easter_date - timedelta(days=2): [{"name": "Велики петък", "type": "orthodox", "description": descriptions["good_friday"]}],
             easter_date - timedelta(days=1): [{"name": "Велика събота", "type": "orthodox", "description": descriptions["holy_saturday"]}],
             easter_date: [{"name": "ВЕЛИКДЕН", "type": "orthodox", "description": descriptions["easter"]}],
             easter_date + timedelta(days=1): [{"name": "Светли понеделник", "type": "orthodox"}],
-            easter_date + timedelta(days=39): [{"name": "Възнесение Господне", "type": "orthodox", "description": descriptions["ascension"]}],
+            easter_date + timedelta(days=39): [{"name": "Възнесение Господне (Спасовден)", "type": "orthodox", "description": descriptions["ascension"]}],
             pentecost_date - timedelta(days=1): [{"name": "Черешова задушница", "type": "orthodox", "description": descriptions["zadushnica_before_pentecost"]}],
             pentecost_date: [{"name": "Петдесетница", "type": "orthodox", "description": descriptions["pentecost"]}],
         }
-        
+
+        # Add name days for movable holidays
+        movable_holidays.setdefault(todorovden_date, []).append({"name": "Имен ден: Тодор, Тодорка, Теодор", "type": "name-day", "description": descriptions["nameday_description"]})
+        movable_holidays.setdefault(lazarovden, []).append({"name": "Имен ден: Лазар, Лазарка", "type": "name-day", "description": descriptions["nameday_description"]})
+        movable_holidays.setdefault(palm_sunday, []).append({"name": "Имен ден: Цветан, Цветанка, Цветомир, Цветомира, и всички с имена на цветя", "type": "name-day", "description": descriptions["nameday_description"]})
+        movable_holidays.setdefault(easter_date + timedelta(days=39), []).append({"name": "Имен ден: Спас, Спаска", "type": "name-day", "description": descriptions["nameday_description"]})
+
         st_michael_day = date(year, 11, 8)
         zadushnica_st_michael = st_michael_day - timedelta(days=(st_michael_day.weekday() + 2) % 7)
         all_events.setdefault(zadushnica_st_michael, []).extend([{"name": "Архангелова задушница", "type": "orthodox", "description": descriptions["zadushnica_before_st_michael"]}])
@@ -184,19 +257,20 @@ def generate_calendar_data(start_year, end_year):
         # Add fasting periods
         # Great Lent
         for i in range(48):
-            day = easter_date - timedelta(days=47 - i)
+            day = easter_date - timedelta(days=48 - i)
             all_events.setdefault(day, []).append({"name": "Велик пост", "type": "fasting", "description": descriptions["great_lent"]})
         
         # Apostles' Fast
         apostles_fast_start = pentecost_date + timedelta(days=8)
         apostles_fast_end = date(year, 6, 28)
         if apostles_fast_start <= apostles_fast_end:
-            for i in range((apostles_fast_end - apostles_fast_start).days + 1):
-                day = apostles_fast_start + timedelta(days=i)
-                all_events.setdefault(day, []).append({"name": "Петров пост", "type": "fasting", "description": descriptions["apostles_fast"]})
+            current_day = apostles_fast_start
+            while current_day <= apostles_fast_end:
+                all_events.setdefault(current_day, []).append({"name": "Петров пост", "type": "fasting", "description": descriptions["apostles_fast"]})
+                current_day += timedelta(days=1)
 
         # Dormition Fast
-        for i in range(14):
+        for i in range(15):
             day = date(year, 8, 1) + timedelta(days=i)
             all_events.setdefault(day, []).append({"name": "Богородичен пост", "type": "fasting", "description": descriptions["dormition_fast"]})
 
@@ -208,22 +282,26 @@ def generate_calendar_data(start_year, end_year):
         # Strict fasting days
         all_events.setdefault(date(year, 12, 24), []).append({"name": "Строг пост", "type": "fasting", "description": descriptions["strict_fast"]})
         all_events.setdefault(easter_date - timedelta(days=2), []).append({"name": "Строг пост", "type": "fasting", "description": descriptions["strict_fast"]})
+        all_events.setdefault(date(year, 8, 29), []).append({"name": "Строг пост (Отсичане главата на св. Йоан Предтеча)", "type": "fasting", "description": descriptions["strict_fast"]})
+        all_events.setdefault(date(year, 9, 14), []).append({"name": "Строг пост (Кръстовден)", "type": "fasting", "description": descriptions["strict_fast"]})
+
 
         monthly_data = {f"{month_names_bg[i]} {year}": {"month": f"{month_names_bg[i]} {year}", "days": {}} for i in range(12)}
         for day, events in all_events.items():
-            month_key = f"{month_names_bg[day.month - 1]} {day.year}"
-            day_key = str(day.day)
+            if day.year == year:
+                month_key = f"{month_names_bg[day.month - 1]} {day.year}"
+                day_key = str(day.day)
 
-            unique_events = []
-            added_event_names = set()
-            type_priority = ['non-working', 'orthodox', 'secular', 'name-day', 'fasting']
-            sorted_events = sorted(events, key=lambda x: type_priority.index(x.get('type', '')) if x.get('type') in type_priority else 99)
+                unique_events = []
+                added_event_names = set()
+                type_priority = ['non-working', 'orthodox', 'secular', 'name-day', 'fasting']
+                sorted_events = sorted(events, key=lambda x: type_priority.index(x.get('type', '')) if x.get('type') in type_priority else 99)
 
-            for e in sorted_events:
-                if e['name'] not in added_event_names:
-                    unique_events.append(e)
-                    added_event_names.add(e['name'])
-            monthly_data[month_key]["days"][day_key] = unique_events
+                for e in sorted_events:
+                    if e['name'] not in added_event_names:
+                        unique_events.append(e)
+                        added_event_names.add(e['name'])
+                monthly_data[month_key]["days"][day_key] = unique_events
 
         calendar_data.extend(monthly_data.values())
 

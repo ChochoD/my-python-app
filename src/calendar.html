@@ -30,6 +30,7 @@
         .national-event { color: red; }
         .orthodox-event { color: purple; }
         .fasting-event { color: green; }
+        .name-day-event { color: orange; }
         .current-day { background-color: #ffffcc; border: 2px solid #ffcc00; }
         .selected-day { background-color: #d0d0d0; }
         #search-results, #date-range-results { margin-top: 1em; }
@@ -76,6 +77,7 @@
         #event-details .orthodox-event { border-color: purple; }
         #event-details .national-event { border-color: red; }
         #event-details .fasting-event { border-color: green; }
+        #event-details .name-day-event { border-color: orange; }
         
         /* Note Styles */
         #notes-list {
@@ -163,6 +165,7 @@
             <label><input type="checkbox" name="filter" value="orthodox" checked> Православни</label>
             <label><input type="checkbox" name="filter" value="national" checked> Национални</label>
             <label><input type="checkbox" name="filter" value="fasting" checked> Постни</label>
+            <label><input type="checkbox" name="filter" value="name-day" checked> Именни дни</label>
         </form>
     </div>
     <div class="navigation no-print">
@@ -330,7 +333,8 @@
                                     if (filters.length === 0) return true;
                                     if (filters.includes('orthodox') && feast.type === 'orthodox') return true;
                                     if (filters.includes('national') && (feast.type === 'secular' || feast.type === 'non-working')) return true;
-                                    if (filters.includes('fasting') && feast.name.toLowerCase().includes('пост')) return true;
+                                    if (filters.includes('fasting') && feast.type === 'fasting') return true;
+                                    if (filters.includes('name-day') && feast.type === 'name-day') return true;
                                     return false;
                                 });
 
@@ -347,7 +351,7 @@
                                     sortedFeasts.forEach(feast => {
                                         const feastItem = document.createElement('li');
                                         let icon = '';
-                                        if (feast.name.toLowerCase().includes('пост')) { 
+                                        if (feast.type === 'fasting') { 
                                             feastItem.classList.add('fasting-event'); 
                                             icon = '🌱';
                                         } else if (feast.type === 'orthodox') { 
@@ -356,6 +360,9 @@
                                         } else if (feast.type === 'secular' || feast.type === 'non-working') { 
                                             feastItem.classList.add('national-event'); 
                                             icon = '🇧🇬';
+                                        } else if (feast.type === 'name-day') {
+                                            feastItem.classList.add('name-day-event');
+                                            icon = '🎁';
                                         }
 
                                         if (icon) {
@@ -446,7 +453,7 @@
                                 const eventItem = document.createElement('div');
                                 eventItem.classList.add('event-item');
                                 let icon = '', className = '';
-                                if (feast.name.toLowerCase().includes('пост')) { 
+                                if (feast.type === 'fasting') { 
                                     icon = '🌱'; 
                                     className = 'fasting-event'; 
                                 } else if (feast.type === 'orthodox') { 
@@ -455,6 +462,9 @@
                                 } else if (feast.type === 'secular' || feast.type === 'non-working') { 
                                     icon = '🇧🇬'; 
                                     className = 'national-event'; 
+                                } else if (feast.type === 'name-day') {
+                                    icon = '🎁';
+                                    className = 'name-day-event';
                                 }
                                 eventItem.classList.add(className);
                                 const title = document.createElement('h3');
